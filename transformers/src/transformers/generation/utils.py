@@ -150,6 +150,7 @@ class GenerateDecoderOnlyOutput(ModelOutput):
     attentions: Optional[Tuple[Tuple[torch.FloatTensor]]] = None
     hidden_states: Optional[Tuple[Tuple[torch.FloatTensor]]] = None
     past_key_values: Optional[Tuple[Tuple[Tuple[torch.FloatTensor]]]] = None
+    premature_layer_dist: Optional[Dict[int, int]] = None
 
 
 @dataclass
@@ -1884,6 +1885,13 @@ class GenerationMixin:
         logits_processor: Optional[LogitsProcessorList] = None,
         stopping_criteria: Optional[StoppingCriteriaList] = None,
         prefix_allowed_tokens_fn: Optional[Callable[[int, torch.Tensor], List[int]]] = None,
+        dola_decoding: Optional[bool] = None,
+        mature_layer: Optional[int] = None,
+        base_layer: Optional[int] = None,
+        candidate_premature_layers: Optional[List[int]] = None,
+        relative_top: Optional[float] = 0.1,
+        contrastive_decoding: Optional[bool] = None,
+        student_model = None,
         synced_gpus: Optional[bool] = None,
         assistant_model: Optional["PreTrainedModel"] = None,
         streamer: Optional["BaseStreamer"] = None,
