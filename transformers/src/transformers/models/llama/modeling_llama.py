@@ -868,8 +868,9 @@ class LlamaForCausalLM(LlamaPreTrainedModel, GenerationMixin):
                 
             return CausalLMOutputWithPast(
                 loss=loss,
-                # logits=logits,
-                logits=logits_dict.get(early_exit_layers[-1], None), 
+                logits=logits,
+                # logits=logits_dict.get(early_exit_layers[-1], None), 
+                logits_dict = logits_dict,
                 past_key_values=outputs.past_key_values,
                 hidden_states=outputs.hidden_states,
                 attentions=outputs.attentions,
