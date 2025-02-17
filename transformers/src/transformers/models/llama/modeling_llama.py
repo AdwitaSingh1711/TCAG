@@ -866,16 +866,16 @@ class LlamaForCausalLM(LlamaPreTrainedModel, GenerationMixin):
             if labels is not None:
                 loss = self.loss_function(logits=logits, labels=labels, vocab_size=self.config.vocab_size, **kwargs)
                 
-            return CausalLMOutputWithPast(
+            final_outputs= CausalLMOutputWithPast(
                 loss=loss,
                 logits=logits,
                 # logits=logits_dict.get(early_exit_layers[-1], None), 
-                logits_dict = logits_dict,
+                # logits_dict = logits_dict,
                 past_key_values=outputs.past_key_values,
                 hidden_states=outputs.hidden_states,
                 attentions=outputs.attentions,
             )
-            # return logits_dict, final_outputs
+            return logits_dict, final_outputs
 
         hidden_states = outputs[0]
         # Only compute necessary logits, and do not upcast them to float if we are not computing the loss
