@@ -796,6 +796,7 @@ class GemmaForCausalLM(GemmaPreTrainedModel, GenerationMixin):
         return_dict: Optional[bool] = None,
         cache_position: Optional[torch.LongTensor] = None,
         logits_to_keep: Union[int, torch.Tensor] = 0,
+        early_exit_layers: Optional[List[int]] = None,
         **kwargs: Unpack[KwargsForCausalLM],
     ) -> Union[Tuple, CausalLMOutputWithPast]:
         r"""
@@ -845,11 +846,37 @@ class GemmaForCausalLM(GemmaPreTrainedModel, GenerationMixin):
             inputs_embeds=inputs_embeds,
             use_cache=use_cache,
             output_attentions=output_attentions,
-            output_hidden_states=output_hidden_states,
+            # output_hidden_states=output_hidden_states,
+            output_hidden_states=output_hidden_states or early_exit_layers is not None,
             return_dict=return_dict,
             cache_position=cache_position,
             **kwargs,
         )
+
+        if early_exit_layers is not None:
+            logits_dict = {}
+            # loss_dict = {}
+            for early_exit_layer in early_exit_layers:
+                logits = self.lm_head(outputs.hidden_states[early_exit_layer])
+                logits_dict[early_exit_layer] = logits
+                print(f"Populated logits_dict[{early_exit_layer}]: {logits.shape}")
+            loss = None
+
+            outputs.logits_dict = logits_dict
+
+            if labels is not None:
+                loss = self.loss_function(logits=logits, labels=labels, vocab_size=self.config.vocab_size, **kwargs)
+                
+            final_outputs= CausalLMOutputWithPast(
+                loss=loss,
+                logits=logits,
+                # logits=logits_dict.get(early_exit_layers[-1], None), 
+                # logits_dict = logits_dict,
+                past_key_values=outputs.past_key_values,
+                hidden_states=outputs.hidden_states,
+                attentions=outputs.attentions,
+            )
+            return logits_dict, final_outputs
 
         hidden_states = outputs[0]
         # Only compute necessary logits, and do not upcast them to float if we are not computing the loss
