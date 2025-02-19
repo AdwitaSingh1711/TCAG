@@ -859,7 +859,7 @@ class GemmaForCausalLM(GemmaPreTrainedModel, GenerationMixin):
             for early_exit_layer in early_exit_layers:
                 logits = self.lm_head(outputs.hidden_states[early_exit_layer])
                 logits_dict[early_exit_layer] = logits
-                print(f"Populated logits_dict[{early_exit_layer}]: {logits.shape}")
+                # print(f"Populated logits_dict[{early_exit_layer}]: {logits.shape}")
             loss = None
 
             outputs.logits_dict = logits_dict
