@@ -1897,6 +1897,8 @@ class GenerationMixin:
         streamer: Optional["BaseStreamer"] = None,
         negative_prompt_ids: Optional[torch.Tensor] = None,
         negative_prompt_attention_mask: Optional[torch.Tensor] = None,
+        past_key_values: Optional[Any] = None,
+        use_cache: Optional[bool] = False,
         **kwargs,
     ) -> Union[GenerateOutput, torch.LongTensor]:
         r"""
@@ -1961,6 +1963,7 @@ class GenerationMixin:
                 size. This is an experimental feature, subject to breaking API changes in future versions.
             negative_prompt_attention_mask (`torch.LongTensor` of shape `(batch_size, sequence_length)`, *optional*):
                 Attention_mask for `negative_prompt_ids`.
+            past_key_values: KV Cache for knowledge
             kwargs (`Dict[str, Any]`, *optional*):
                 Ad hoc parametrization of `generation_config` and/or additional model-specific kwargs that will be
                 forwarded to the `forward` function of the model. If the model is an encoder-decoder model, encoder
@@ -2197,6 +2200,8 @@ class GenerationMixin:
                 generation_config=generation_config,
                 synced_gpus=synced_gpus,
                 streamer=streamer,
+                past_key_values= past_key_values if past_key_values is not None else None,
+                use_cache = use_cache,
                 **model_kwargs,
             )
 
@@ -2505,6 +2510,8 @@ class GenerationMixin:
         generation_config: GenerationConfig,
         synced_gpus: bool,
         streamer: "BaseStreamer",
+        past_key_values: Optional[Any] = None,
+        use_cache:Optional[bool] = None,
         **model_kwargs,
     ) -> Union[GenerateNonBeamOutput, torch.LongTensor]:
         r"""
@@ -2624,6 +2631,8 @@ class GenerationMixin:
             # forward pass to get next token
             outputs = self(
                 **model_inputs,
+                past_key_values=past_key_values,
+                use_cache=True,
                 return_dict=True,
                 output_attentions=output_attentions,
                 output_hidden_states=True,
@@ -2684,6 +2693,7 @@ class GenerationMixin:
             if has_eos_stopping_criteria:
                 next_tokens = next_tokens * unfinished_sequences + pad_token_id * (1 - unfinished_sequences)
 
+            past_key_values = outputs.past_key_values
             # update generated ids, model inputs, and length for next step
             input_ids = torch.cat([input_ids, next_tokens[:, None]], dim=-1)
             if streamer is not None:
