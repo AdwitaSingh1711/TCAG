@@ -2036,6 +2036,8 @@ class GenerationMixin:
         if not self.config.is_encoder_decoder and model_input_name == "inputs_embeds":
             generation_config.use_cache = True
 
+        print(f"\nshape of inputs: {inputs.shape}\n")
+        print(f"\nshape of inputs_tensor: {inputs_tensor.shape}\n")
         if not kwargs_has_attention_mask and requires_attention_mask and accepts_attention_mask:
             model_kwargs["attention_mask"] = self._prepare_attention_mask_for_generation(
                 inputs_tensor, generation_config, model_kwargs
