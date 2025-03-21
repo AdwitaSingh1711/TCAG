@@ -581,6 +581,8 @@ class GenerationMixin:
             raise ValueError("`bos_token_id` has to be defined when no `input_ids` are provided.")
 
         return torch.ones((batch_size, 1), dtype=torch.long, device=self.device) * bos_token_id
+    
+    
 
     def _prepare_attention_mask_for_generation(
         self,
@@ -626,6 +628,36 @@ class GenerationMixin:
             attention_mask_from_padding * can_infer_attention_mask + default_attention_mask * ~can_infer_attention_mask
         )
         return attention_mask
+    
+    def custom_prepare_attention_mask(
+        self,
+        inputs_tensor: torch.Tensor,
+        generation_config: GenerationConfig,
+        model_kwargs: Dict[str, Any],
+    ) -> torch.LongTensor:
+        # Call the original function to get the base mask (shape [1, 1, 7871, 7871])
+        attention_mask = self._prepare_attention_mask_for_generation(
+        inputs_tensor, generation_config, model_kwargs)
+    
+        # Get past_key_values_length from model_kwargs
+        past_key_values_length = model_kwargs.get("past_key_values_length", 0)
+        input_length = inputs_tensor.shape[1]
+        current_seq_len = input_length + past_key_values_length
+    
+        # Expand the mask to match the key/value sequence length
+        expanded_mask = torch.ones(
+            (1, 1, input_length, current_seq_len),  # [batch, heads, query_len, key_len]
+            device=attention_mask.device,
+            dtype=attention_mask.dtype,
+        )
+    
+        # Apply causality (only attend to past tokens)
+        causal_mask = torch.tril(expanded_mask)
+    
+        # Expand to match the number of heads (8)
+        causal_mask = causal_mask.expand(1, 8, -1, -1)  # Shape: [1, 8, 7871, current_seq_len]
+    
+        return causal_mask
 
     def _prepare_encoder_decoder_kwargs_for_generation(
         self,
@@ -2653,11 +2685,34 @@ class GenerationMixin:
         print(dir(past_key_values))
         while self._has_unfinished_sequences(this_peer_finished, synced_gpus, device=input_ids.device):
             # prepare model inputs
+            past_key_values_length = (
+                past_key_values[0][0].shape[2] 
+                if past_key_values is not None 
+                else 0
+            )
             model_kwargs_without_past = model_kwargs.copy()
             model_kwargs_without_past.pop("past_key_values", None)
             model_kwargs_without_past.pop("use_cache", None)
             # model_inputs = self.prepare_inputs_for_generation(input_ids, **model_kwargs)
             model_inputs = self.prepare_inputs_for_generation(input_ids, **model_kwargs_without_past)
+
+            if "attention_mask" in model_inputs:
+                # Get the original mask (shape [1, 1, input_length, input_length])
+                original_mask = model_inputs["attention_mask"]
+                
+                # Compute current sequence length (input + generated tokens)
+                input_length = original_mask.shape[-1]
+                current_seq_len = input_length + past_key_values_length
+                
+                # Expand mask to [1, 8, input_length, current_seq_len]
+                expanded_mask = torch.ones(
+                    1, 8, input_length, current_seq_len,
+                    dtype=original_mask.dtype,
+                    device=original_mask.device
+                ).tril()  # Apply causality
+                
+                # Replace the original mask with the expanded one
+                model_inputs["attention_mask"] = expanded_mask
 
             # forward pass to get next token
             outputs = self(
