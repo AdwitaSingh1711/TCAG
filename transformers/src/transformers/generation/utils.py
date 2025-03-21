@@ -2186,6 +2186,9 @@ class GenerationMixin:
                 streamer=streamer,
                 **model_kwargs,
             )
+        
+        model_kwargs_without_past = model_kwargs.copy()
+        model_kwargs_without_past.pop("past_key_values", None)
         elif generation_mode == GenerationMode.DOLA_GENERATION:
             if self._is_stateful:
                 # DoLa decoding was not designed for stateful models, and would require some changes
@@ -2202,7 +2205,8 @@ class GenerationMixin:
                 streamer=streamer,
                 past_key_values= past_key_values if past_key_values is not None else None,
                 use_cache = use_cache,
-                **model_kwargs,
+                # **model_kwargs,
+                **model_kwargs_without_past,
             )
 
         elif generation_mode == GenerationMode.CONTRASTIVE_SEARCH:
