@@ -2632,7 +2632,11 @@ class GenerationMixin:
 
         while self._has_unfinished_sequences(this_peer_finished, synced_gpus, device=input_ids.device):
             # prepare model inputs
-            model_inputs = self.prepare_inputs_for_generation(input_ids, **model_kwargs)
+            model_kwargs_without_past = model_kwargs.copy()
+            model_kwargs_without_past.pop("past_key_values", None)
+            model_kwargs_without_past.pop("use_cache", None)
+            # model_inputs = self.prepare_inputs_for_generation(input_ids, **model_kwargs)
+            model_inputs = self.prepare_inputs_for_generation(input_ids, **model_kwargs_without_past)
 
             # forward pass to get next token
             outputs = self(
