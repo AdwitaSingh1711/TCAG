@@ -2647,6 +2647,8 @@ class GenerationMixin:
                     outputs.hidden_states[candidate_premature_layer][:, -1, :]
                 ).to(final_logits.device)
 
+            print("\nGemma Running\n")
+
             # synced_gpus: don't waste resources running the code we don't need; kwargs must be updated before skipping
             model_kwargs = self._update_model_kwargs_for_generation(
                 outputs,
@@ -4733,6 +4735,8 @@ def _dola_select_contrast(
     softmax_mature_layer = F.softmax(final_logits, dim=-1)
     # shape: (num_premature_layers, batch_size, vocab_size)
     softmax_premature_layers = F.softmax(stacked_premature_layers, dim=-1)
+
+    print("\nDOLA Running pakka pakka\n")
 
     # 3. Calculate the average distribution
     # shape: (num_premature_layers, batch_size, vocab_size)
