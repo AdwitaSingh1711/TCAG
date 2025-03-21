@@ -2648,7 +2648,8 @@ class GenerationMixin:
             raise ValueError("DoLa is not supported for models that don't have output embeddings.")
 
         print(f"\n4. shape of mask in _dola_decoding:{model_kwargs['attention_mask'].shape}\n")
-        print(f"\n BEFORE LOOP: past_key_values: {past_key_values.shape}\n")
+        # print(f"\n BEFORE LOOP: past_key_values: {past_key_values.shape}\n")
+        print(f"\n BEFORE LOOP: type(past_key_values): {type(past_key_values)}\n")
         while self._has_unfinished_sequences(this_peer_finished, synced_gpus, device=input_ids.device):
             # prepare model inputs
             model_kwargs_without_past = model_kwargs.copy()
@@ -2730,7 +2731,10 @@ class GenerationMixin:
 
             print(f"\n12\n")
             past_key_values = outputs.past_key_values
-            print(f"\nWITHIN LOOP: past_key_values: {past_key_values.shape}\n")
+            # print(f"\nWITHIN LOOP: past_key_values: {past_key_values.shape}\n")
+            print(f"\n WITHIN LOOP: type(past_key_values): {type(past_key_values)}\n")
+# print(f" BEFORE LOOP: past_key_values: {past_key_values}\n")
+
             # update generated ids, model inputs, and length for next step
             input_ids = torch.cat([input_ids, next_tokens[:, None]], dim=-1)
             if streamer is not None:
