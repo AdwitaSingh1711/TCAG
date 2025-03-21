@@ -2056,6 +2056,7 @@ class GenerationMixin:
             if model_input_name == "input_ids" and len(model_kwargs["attention_mask"].shape) > 2:
                 raise ValueError("`attention_mask` passed to `generate` must be 2D.")
 
+        print(f"\n1. shape of mask in _prepare_attention_mask:{model_kwargs["attention_mask"].shape}\n")
         if self.config.is_encoder_decoder and "encoder_outputs" not in model_kwargs:
             # if model is encoder decoder encoder_outputs are created and added to `model_kwargs`
             model_kwargs = self._prepare_encoder_decoder_kwargs_for_generation(
@@ -2080,6 +2081,7 @@ class GenerationMixin:
         if streamer is not None:
             streamer.put(input_ids.cpu())
 
+        print(f"\n2. shape of mask in _prepare_attention_mask:{model_kwargs["attention_mask"].shape}\n")
         # 6. Prepare `max_length` depending on other stopping criteria.
         input_ids_length = input_ids.shape[-1]
         has_default_max_length = kwargs.get("max_length") is None and generation_config.max_length is not None
@@ -2205,6 +2207,7 @@ class GenerationMixin:
                 raise ValueError(
                     f"dola decoding is not supported with stateful models, such as {self.__class__.__name__}"
                 )
+            print(f"\n3.shape of mask in _prepare_attention_mask:{model_kwargs["attention_mask"].shape}\n")
             model_kwargs_without_past = model_kwargs.copy()
             model_kwargs_without_past.pop("past_key_values", None)
             model_kwargs_without_past.pop("use_cache", None)  
@@ -2582,6 +2585,7 @@ class GenerationMixin:
         return_dict_in_generate = generation_config.return_dict_in_generate
         has_eos_stopping_criteria = any(hasattr(criteria, "eos_token_id") for criteria in stopping_criteria)
         do_sample = generation_config.do_sample
+        print(f"\nshape of mask in _dola_decoding:{model_kwargs["attention_mask"].shape}\n")
 
         # init attention / hidden states / scores tuples
         scores = () if (return_dict_in_generate and output_scores) else None
@@ -2590,6 +2594,7 @@ class GenerationMixin:
         cross_attentions = () if (return_dict_in_generate and output_attentions) else None
         decoder_hidden_states = () if (return_dict_in_generate and output_hidden_states) else None
 
+        print(f"\n2. shape of mask in _dola_decoding:{model_kwargs["attention_mask"].shape}\n")
         # keep track of which sequences are already finished
         batch_size = input_ids.shape[0]
         unfinished_sequences = torch.ones(batch_size, dtype=torch.long, device=input_ids.device)
@@ -2612,6 +2617,7 @@ class GenerationMixin:
         else:
             start_layer = 0
 
+        print(f"\n3. shape of mask in _dola_decoding:{model_kwargs["attention_mask"].shape}\n")
         # For `N`-layer models with `N <= 40` layers, the layers of `range(0, N // 2, 2)` and `range(N // 2, N, 2)`
         # are used for `'low'` and `'high'` layers, respectively.
         # For models with `N > 40` layers, the layers of `range(0, 20, 2)` and `range(N - 20, N, 2)` are used for
@@ -2641,6 +2647,7 @@ class GenerationMixin:
         if lm_head is None:
             raise ValueError("DoLa is not supported for models that don't have output embeddings.")
 
+        print(f"\n4. shape of mask in _dola_decoding:{model_kwargs["attention_mask"].shape}\n")
         while self._has_unfinished_sequences(this_peer_finished, synced_gpus, device=input_ids.device):
             # prepare model inputs
             model_kwargs_without_past = model_kwargs.copy()
