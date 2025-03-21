@@ -2690,6 +2690,12 @@ class GenerationMixin:
                 if past_key_values is not None 
                 else 0
             )
+
+            if past_key_values is not None:
+                model_dtype = past_key_values[0][0].dtype  # Use key tensor's dtype
+            else:
+                model_dtype = torch.float32
+
             model_kwargs_without_past = model_kwargs.copy()
             model_kwargs_without_past.pop("past_key_values", None)
             model_kwargs_without_past.pop("use_cache", None)
@@ -2707,7 +2713,7 @@ class GenerationMixin:
                 # Expand mask to [1, 8, input_length, current_seq_len]
                 expanded_mask = torch.ones(
                     1, 8, input_length, current_seq_len,
-                    dtype=query.dtype,
+                    dtype=model_dtype,
                     device=original_mask.device
                 ).tril()  # Apply causality
                 
