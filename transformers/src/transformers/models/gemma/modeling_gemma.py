@@ -275,6 +275,15 @@ class GemmaAttention(nn.Module):
             cache_kwargs = {"sin": sin, "cos": cos, "cache_position": cache_position}
             key_states, value_states = past_key_value.update(key_states, value_states, self.layer_idx, cache_kwargs)
 
+        print(f"\nquery_size:{query_states.shape}\n")
+        print(f"\nkey_size:{key_states.shape}\n")
+        print(f"\nvalue_size:{value_states.shape}\n")
+        if attention_mask is not None:
+            print(f"\nattention_mask shape: {attention_mask.shape}\n")
+        else:
+            print("\nattention_mask is None\n")
+
+            
         attention_interface: Callable = eager_attention_forward
         if self.config._attn_implementation != "eager":
             if self.config._attn_implementation == "sdpa" and kwargs.get("output_attentions", False):
