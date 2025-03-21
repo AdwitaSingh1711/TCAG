@@ -2671,10 +2671,12 @@ class GenerationMixin:
             next_token_logits = _dola_select_contrast(
                 candidate_premature_layers, candidate_premature_logits, final_logits
             )
+            print(f"\n8\n")
             next_token_logits = next_token_logits.to(input_ids.device)
             # pre-process distribution
             next_token_scores = logits_processor(input_ids, next_token_logits)
 
+            print(f"\n9\n")
             # Store scores, attentions and hidden_states when required
             if return_dict_in_generate:
                 if output_scores:
@@ -2695,22 +2697,26 @@ class GenerationMixin:
                         else (outputs.hidden_states,)
                     )
 
+            print(f"\n10\n")
             if do_sample:  # sample
                 probs = nn.functional.softmax(next_token_scores, dim=-1)
                 next_tokens = torch.multinomial(probs, num_samples=1).squeeze(1)
             else:  # argmax
                 next_tokens = torch.argmax(next_token_scores, dim=-1)
 
+            print(f"\n11\n")
             # finished sentences should have their next token be a padding token
             if has_eos_stopping_criteria:
                 next_tokens = next_tokens * unfinished_sequences + pad_token_id * (1 - unfinished_sequences)
 
+            print(f"\n12\n")
             past_key_values = outputs.past_key_values
             # update generated ids, model inputs, and length for next step
             input_ids = torch.cat([input_ids, next_tokens[:, None]], dim=-1)
             if streamer is not None:
                 streamer.put(next_tokens.cpu())
 
+            print(f"\n13\n")
             # stop when each sentence is finished
             unfinished_sequences = unfinished_sequences & ~stopping_criteria(input_ids, scores)
             this_peer_finished = unfinished_sequences.max() == 0
@@ -2718,6 +2724,7 @@ class GenerationMixin:
         if streamer is not None:
             streamer.end()
 
+        print(f"\n14\n")
         if return_dict_in_generate:
             return GenerateDecoderOnlyOutput(
                 sequences=input_ids,
