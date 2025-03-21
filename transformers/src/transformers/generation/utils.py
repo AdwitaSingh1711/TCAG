@@ -2707,7 +2707,7 @@ class GenerationMixin:
                 # Expand mask to [1, 8, input_length, current_seq_len]
                 expanded_mask = torch.ones(
                     1, 8, input_length, current_seq_len,
-                    dtype=original_mask.dtype,
+                    dtype=query.dtype,
                     device=original_mask.device
                 ).tril()  # Apply causality
                 
