@@ -2196,6 +2196,7 @@ class GenerationMixin:
                 )
             model_kwargs_without_past = model_kwargs.copy()
             model_kwargs_without_past.pop("past_key_values", None)
+            model_kwargs_without_conflicts.pop("use_cache", None)  
             result = self._dola_decoding(
                 input_ids,
                 dola_layers=generation_config.dola_layers,
