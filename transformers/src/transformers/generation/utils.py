@@ -2187,14 +2187,15 @@ class GenerationMixin:
                 **model_kwargs,
             )
         
-        model_kwargs_without_past = model_kwargs.copy()
-        model_kwargs_without_past.pop("past_key_values", None)
+        
         elif generation_mode == GenerationMode.DOLA_GENERATION:
             if self._is_stateful:
                 # DoLa decoding was not designed for stateful models, and would require some changes
                 raise ValueError(
                     f"dola decoding is not supported with stateful models, such as {self.__class__.__name__}"
                 )
+            model_kwargs_without_past = model_kwargs.copy()
+            model_kwargs_without_past.pop("past_key_values", None)
             result = self._dola_decoding(
                 input_ids,
                 dola_layers=generation_config.dola_layers,
