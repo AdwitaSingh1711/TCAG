@@ -797,6 +797,7 @@ class GemmaForCausalLM(GemmaPreTrainedModel, GenerationMixin):
         cache_position: Optional[torch.LongTensor] = None,
         logits_to_keep: Union[int, torch.Tensor] = 0,
         early_exit_layers: Optional[List[int]] = None,
+        premature_layer:Optional[Any]=None,
         **kwargs: Unpack[KwargsForCausalLM],
     ) -> Union[Tuple, CausalLMOutputWithPast]:
         r"""
