@@ -2650,6 +2650,7 @@ class GenerationMixin:
         print(f"\n4. shape of mask in _dola_decoding:{model_kwargs['attention_mask'].shape}\n")
         # print(f"\n BEFORE LOOP: past_key_values: {past_key_values.shape}\n")
         print(f"\n BEFORE LOOP: type(past_key_values): {type(past_key_values)}\n")
+        print(dir(past_key_values))
         while self._has_unfinished_sequences(this_peer_finished, synced_gpus, device=input_ids.device):
             # prepare model inputs
             model_kwargs_without_past = model_kwargs.copy()
