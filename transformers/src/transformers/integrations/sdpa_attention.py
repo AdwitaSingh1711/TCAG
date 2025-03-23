@@ -34,6 +34,7 @@ def sdpa_attention_forward(
     causal_mask = attention_mask
     if attention_mask is not None:
         causal_mask = causal_mask[:, :, :, : key.shape[-2]]
+        print(f"\nattention_mask:{attention_mask.shape}\n")
 
     print(f"\n16\n")
     # SDPA with memory-efficient backend is bugged with non-contiguous inputs and custom attn_mask for some torch versions
@@ -56,7 +57,7 @@ def sdpa_attention_forward(
     
     print(f"\nquery:{query.shape}\n")
     print(f"\nkey:{key.shape}\n")
-    print(f"\ncausal_mask:{causal_mask.shape}\n")
+    
 
     print(f"\n19\n")
     attn_output = torch.nn.functional.scaled_dot_product_attention(
