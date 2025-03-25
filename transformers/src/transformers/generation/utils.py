@@ -4841,19 +4841,19 @@ def _dola_select_contrast(
     # shape: (num_premature_layers, batch_size, vocab_size)
     softmax_premature_layers = F.softmax(stacked_premature_layers, dim=-1)
 
-    print("\nDOLA Running pakka pakka\n")
+    print("\nRunning JSD for DOLA Decoding\n")
 
     # 3. Calculate the average distribution
     # shape: (num_premature_layers, batch_size, vocab_size)
     avg_dist = 0.5 * (softmax_mature_layer[None, :, :] + softmax_premature_layers)
-    print("\n4\n")
+    # print("\n4\n")
     # 4. Calculate log-softmax for the KL divergence
     # shape: (batch_size, vocab_size)
     log_softmax_mature_layer = F.log_softmax(final_logits, dim=-1)
     # shape: (num_premature_layers, batch_size, vocab_size)
     log_softmax_premature_layers = F.log_softmax(stacked_premature_layers, dim=-1)
 
-    print("\n5\n")
+    # print("\n5\n")
     # 5. Calculate the KL divergences and then the JS divergences
     # shape: (num_premature_layers, batch_size)
     kl1 = F.kl_div(log_softmax_mature_layer[None, :, :], avg_dist, reduction="none").mean(-1)
@@ -4861,12 +4861,12 @@ def _dola_select_contrast(
     kl2 = F.kl_div(log_softmax_premature_layers, avg_dist, reduction="none").mean(-1)
     js_divs = 0.5 * (kl1 + kl2)  # shape: (num_premature_layers, batch_size)
 
-    print("\n6\n")
+    # print("\n6\n")
     # 6. Reduce the batchmean
     js_divs = js_divs.mean(-1)  # shape: (num_premature_layers,)
     premature_layer = candidate_premature_layers[int(js_divs.argmax().cpu().item())]
 
-    print("\n7\n")
+    # print("\n7\n")
     base_logits = candidate_premature_logits[premature_layer]
     final_logits, base_logits = _relative_top_filter(final_logits, base_logits)
     logits = final_logits - base_logits
